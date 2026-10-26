@@ -11,13 +11,14 @@ ROOT = Path.cwd()
 with open(ROOT / "stanford_dogs_per_breed_metrics.csv", newline="") as metrics_file:
     metrics = list(csv.DictReader(metrics_file))
 confusion = np.loadtxt(ROOT / "stanford_dogs_confusion_matrix.csv", delimiter=",", dtype=int)
-checkpoint = torch.load(ROOT / "stanford_dogs_resnet18.pt", map_location="cpu", weights_only=False)
+checkpoint_path = ROOT / "stanford_dogs_efficientnet_b0.pt"
+checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 class_names = checkpoint["class_names"]
 
 # The 20 breeds with the lowest recall make class-level weaknesses legible.
 worst = sorted(metrics, key=lambda row: float(row["recall"]))[:20]
 fig, ax = plt.subplots(figsize=(11, 8))
-labels = [row["breed"].split("-", 1)[-1].replace("_", " ") for row in worst]
+labels = [row.get("class", row.get("breed", "")).split("-", 1)[-1].replace("_", " ") for row in worst]
 recalls = [float(row["recall"]) for row in worst]
 ax.barh(labels, recalls, color="#4C78A8")
 ax.set_xlim(0, 1)

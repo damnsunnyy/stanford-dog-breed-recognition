@@ -14,7 +14,7 @@ Treat this as a working title. The paper should describe the actual model and me
 
 How does an ImageNet-pretrained ResNet transfer-learning baseline perform across all 120 dog breeds when evaluated with a fixed split, and which breed pairs and image conditions account for its errors? A useful extension is to compare a part-attention/fine-grained model against the same baseline, reporting accuracy alongside compute cost.
 
-This is a project question, not a verified field-wide research gap. The local run is now complete on the official split: best validation accuracy was 65.50%, and held-out test accuracy was 66.08% (macro F1 64.92%). It is a single ResNet-18 run and should be presented as a baseline, not as a state-of-the-art result.
+This is a project question, not a verified field-wide research gap. The original ResNet-18 baseline reached 66.08% test accuracy. A follow-up ImageNet-pretrained EfficientNet-B0 run reached 82.50% validation accuracy and 82.26% official test accuracy (macro F1 81.22%) after two epochs. This is one seed and one training setup, not a state-of-the-art claim or a controlled architecture-only comparison.
 
 ## Literature review synthesis (first reading)
 
@@ -22,16 +22,16 @@ Khosla et al. define the benchmark around 120 visually similar dog breeds and ex
 
 Early fine-grained work focuses on discriminative local evidence. Yao et al. combine discriminative patch mining with randomized decision trees [3]. Sermanet et al. apply recurrent visual attention directly to Stanford Dogs and report 76.3% mean accuracy for their three-resolution, one-glimpse model, compared with 75.5% for their GoogLeNet baseline; their attention model does not use dog bounding boxes [4]. Bilinear CNNs model local pairwise feature interactions by pooling outer products from two feature streams [5]. FCAN learns class-discriminative glimpses and reports 87.3% for its fine-tuned ResNet-50 baseline, 88.5% with one attention region, and 88.9% with two on Stanford Dogs [7]. NTS-Net uses cooperating Navigator, Teacher, and Scrutinizer modules to propose and classify informative regions on other fine-grained benchmarks [8]; it is relevant methodologically, but its cited experiments do not include Stanford Dogs.
 
-The transformer literature offers a more recent direction. Dosovitskiy et al. show that a transformer over image patches can transfer well from large-scale pretraining [9]. Conde and Turgutlu add multi-stage attention-guided cropping/erasing and report 93.2% accuracy on Stanford Dogs, using the official 12,000/8,580 split [10]. TransFG selects informative patches from transformer attention and adds a contrastive objective; its paper reports 92.3% accuracy on Stanford Dogs and compares against a standard ViT at 91.7% [11]. Cui et al. study a different pipeline that combines features from four CNNs, feature selection, and an SVM on Stanford Dogs [12]. These results are useful literature context, but they are not directly comparable to the current ResNet-18 run without matching the split, input resolution, pretraining, and training protocol.
+The transformer literature offers a more recent direction. Dosovitskiy et al. show that a transformer over image patches can transfer well from large-scale pretraining [9]. Conde and Turgutlu add multi-stage attention-guided cropping/erasing and report 93.2% accuracy on Stanford Dogs, using the official 12,000/8,580 split [10]. TransFG selects informative patches from transformer attention and adds a contrastive objective; its paper reports 92.3% accuracy on Stanford Dogs and compares against a standard ViT at 91.7% [11]. Cui et al. study a different pipeline that combines features from four CNNs, feature selection, and an SVM on Stanford Dogs [12]. These results are useful literature context, but they are not directly comparable to the current EfficientNet-B0 run without matching the split, input resolution, pretraining, and training protocol.
 
 ## Candidate contribution and gap to verify
 
-The literature already contains strong attention and transformer results above 90% on this benchmark. A plain ResNet-18 is therefore best treated as a transparent, compute-light baseline. A defensible student project can measure the accuracy/compute trade-off and explain errors across all 120 breeds using one fixed split, macro metrics, a per-breed confusion analysis, and visual examples. The current search has not established that this exact evaluation is absent from prior work; do not claim novelty until the related-work search is expanded and the comparison protocol of those papers is checked.
+The literature already contains strong attention and transformer results above 90% on this benchmark. The ResNet-18 remains a transparent baseline, while EfficientNet-B0 provides the current stronger result. A defensible student project can measure the accuracy/compute trade-off and explain errors across all 120 breeds using one fixed split, macro metrics, a per-breed confusion analysis, and visual examples. The current search has not established that this exact evaluation is absent from prior work; do not claim novelty until the related-work search is expanded and the comparison protocol of those papers is checked.
 
 ## Methodology and reproducibility record
 
 1. Use the official Stanford train/test lists, preserving the split and class mapping. Keep a validation subset drawn only from the training partition for model selection.
-2. Train an ImageNet-pretrained ResNet-18 baseline. Save the seed, software versions, preprocessing, augmentations, optimizer, learning rate, epoch count, and hardware.
+2. Train and compare ImageNet-pretrained ResNet-18 and EfficientNet-B0 models. Save the seed, software versions, preprocessing, augmentations, optimizer, learning rate, epoch count, and hardware.
 3. Report top-1 accuracy, macro precision, macro recall, macro F1, per-breed scores, and a confusion matrix on the held-out official test partition. Record training time and inference throughput.
 4. If compute permits, compare one fine-grained attention or transformer model using the exact same split and report the same metrics. Do not frame a result as an improvement without repeated or carefully controlled runs.
 5. Use Grad-CAM or attention visualizations only as qualitative evidence, not proof that the model reasons correctly.
@@ -69,10 +69,10 @@ Cite the original source for each claim, cite the dataset paper when describing 
 
 ## Completed experiment outputs
 
-- Best validation accuracy: 65.50% at epoch 5.
-- Official test: 66.08% accuracy, 68.24% macro precision, 65.57% macro recall, 64.92% macro F1.
-- The ten-epoch run reached 93.3% training accuracy at epoch 10 while validation accuracy fell to 59.7%, indicating overfitting under this setup.
+- ResNet-18 baseline: best validation accuracy 65.50%; official test accuracy 66.08%, macro precision 68.24%, macro recall 65.57%, macro F1 64.92%.
+- EfficientNet-B0 follow-up: best validation accuracy 82.50% at epoch 2; official test accuracy 82.26%, macro precision 82.11%, macro recall 81.84%, macro F1 81.22%.
+- The EfficientNet-B0 run used two epochs and a validation-selected checkpoint. Results are from one seed; additional seeds are needed to estimate run-to-run variation.
 - Per-class scores: `stanford_dogs_per_breed_metrics.csv`. Confusion counts: `stanford_dogs_confusion_matrix.csv`.
 - Paper charts: `stanford_dogs_lowest_recall.png` and `stanford_dogs_confusion_heatmap.png`; generation code: `plot_stanford_dogs_results.py`.
-- Run environment: Python 3.14.6, PyTorch 2.14.1, torchvision 0.29.1, SciPy 1.18.1, Apple MPS. Seed 42. Batch size 32, 10 epochs, 224-pixel input.
-- The run is one seed with no uncertainty intervals, no latency benchmark, and no second architecture. State these limitations in the paper.
+- EfficientNet-B0 run environment: Python 3.14.6, PyTorch 2.14.1, torchvision 0.29.1, SciPy 1.18.1, Apple MPS. Seed 42. Batch size 32, 2 epochs, 224-pixel input, RandAugment, label smoothing, AdamW, cosine decay.
+- The run is one seed with no uncertainty intervals or latency benchmark. The two model runs use different recipes, so they do not isolate the effect of architecture.
