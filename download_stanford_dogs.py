@@ -1,8 +1,8 @@
 """Download and prepare the official Stanford Dogs images and split lists."""
 from pathlib import Path
-from urllib.request import urlretrieve
+from urllib.request import Request, urlopen
 import tarfile
-import tempfile
+import time
 
 
 ROOT = Path(__file__).parent
@@ -11,6 +11,7 @@ URLS = {
     "images.tar": "http://vision.stanford.edu/aditya86/ImageNetDogs/images.tar",
     "lists.tar": "http://vision.stanford.edu/aditya86/ImageNetDogs/lists.tar",
 }
+ARCHIVE_DIR = ROOT / ".stanford_dogs_downloads"
 
 
 def safe_extract(archive: tarfile.TarFile, destination: Path) -> None:
@@ -23,6 +24,33 @@ def safe_extract(archive: tarfile.TarFile, destination: Path) -> None:
     archive.extractall(destination)
 
 
+def download(url: str, destination: Path) -> None:
+    """Download with retries and resume a partial file when the server allows it."""
+    for attempt in range(1, 6):
+        offset = destination.stat().st_size if destination.exists() else 0
+        headers = {"Range": f"bytes={offset}-"} if offset else {}
+        try:
+            with urlopen(Request(url, headers=headers), timeout=90) as response:
+                # If Range was ignored, restart instead of appending a duplicate archive.
+                append = offset > 0 and response.status == 206
+                if offset and not append:
+                    offset = 0
+                mode = "ab" if append else "wb"
+                with destination.open(mode) as output:
+                    while chunk := response.read(1024 * 1024):
+                        output.write(chunk)
+            return
+        except Exception as error:
+            if attempt == 5:
+                raise RuntimeError(
+                    f"Could not download {url}. A partial file is saved at {destination}; "
+                    "rerun this script to retry/resume, or download the archive in a browser "
+                    "and place it at that path."
+                ) from error
+            print(f"Download interrupted ({error}); retrying ({attempt}/5)...", flush=True)
+            time.sleep(min(attempt * 3, 12))
+
+
 def main() -> None:
     images = DATASET_DIR / "images" / "Images"
     train_list = DATASET_DIR / "train_list.mat"
@@ -32,16 +60,18 @@ def main() -> None:
         return
 
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="stanford-dogs-") as temp:
-        temp_dir = Path(temp)
-        for filename, url in URLS.items():
-            archive_path = temp_dir / filename
+    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+    for filename, url in URLS.items():
+        archive_path = ARCHIVE_DIR / filename
+        valid_archive = archive_path.is_file() and tarfile.is_tarfile(archive_path)
+        if not valid_archive:
             print(f"Downloading {filename} from Stanford (this may take a while)...", flush=True)
-            urlretrieve(url, archive_path)
-            with tarfile.open(archive_path) as archive:
-                target = DATASET_DIR / "images" if filename == "images.tar" else DATASET_DIR
-                target.mkdir(parents=True, exist_ok=True)
-                safe_extract(archive, target)
+            download(url, archive_path)
+        print(f"Extracting {filename}...", flush=True)
+        with tarfile.open(archive_path) as archive:
+            target = DATASET_DIR / "images" if filename == "images.tar" else DATASET_DIR
+            target.mkdir(parents=True, exist_ok=True)
+            safe_extract(archive, target)
 
     # lists.tar contains a `lists/` directory; the training and evaluation
     # scripts use the two official split files directly from the dataset root.

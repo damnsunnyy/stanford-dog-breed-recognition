@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 archive.zip
 stanford_dogs_dataset/
+.stanford_dogs_downloads/

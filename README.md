@@ -20,6 +20,8 @@ The dataset files are not included in this repository. From the repository direc
 python download_stanford_dogs.py
 ```
 
-This downloads the official Stanford `images.tar` and `lists.tar` archives and prepares the expected `stanford_dogs_dataset/images/Images/`, `train_list.mat`, and `test_list.mat` paths. The image archive is about 778 MB, so the download can take a while. Then run `python evaluate_stanford_dogs.py`. You can also run the downloader before `python train_stanford_dogs.py`.
+This downloads the official Stanford `images.tar` and `lists.tar` archives and prepares the expected `stanford_dogs_dataset/images/Images/`, `train_list.mat`, and `test_list.mat` paths. The image archive is about 778 MB, so the download can take a while. Interrupted downloads are retried and resumed when the server supports it; rerun the command if it still fails.
+
+If Stanford's server cannot be reached, download [images.tar](http://vision.stanford.edu/aditya86/ImageNetDogs/images.tar) and [lists.tar](http://vision.stanford.edu/aditya86/ImageNetDogs/lists.tar) in a browser and save both in the repository's `.stanford_dogs_downloads/` folder (create it if needed), keeping the original filenames. Then rerun `python download_stanford_dogs.py`. After preparation, run `python evaluate_stanford_dogs.py`, or run the downloader before `python train_stanford_dogs.py`.
 
 The downloader uses the archives published on the [Stanford Dogs dataset page](http://vision.stanford.edu/aditya86/ImageNetDogs/main.html). The held-out test list is used only for final scoring.
