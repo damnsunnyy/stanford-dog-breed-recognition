@@ -15,6 +15,13 @@ DATASET_DIR = ROOT / "stanford_dogs_dataset"
 SIZE = 224
 transform = transforms.Compose([transforms.Resize(256), transforms.CenterCrop(SIZE), transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+required = [IMAGE_ROOT, DATASET_DIR / "train_list.mat", DATASET_DIR / "test_list.mat"]
+missing = [str(path.relative_to(ROOT)) for path in required if not path.exists()]
+if missing:
+    raise SystemExit(
+        "Stanford Dogs data is missing. Run `python download_stanford_dogs.py` "
+        "to download and prepare it. Missing: " + ", ".join(missing)
+    )
 ds = datasets.ImageFolder(IMAGE_ROOT, transform=transform)
 values = loadmat(DATASET_DIR / "test_list.mat")["file_list"].reshape(-1)
 paths=[]

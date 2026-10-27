@@ -14,4 +14,12 @@ The trained checkpoint is `stanford_dogs_efficientnet_b0.pt`. The run also write
 
 ## Dataset
 
-The dataset archive is not included. Obtain Stanford Dogs and place the image folders and official `train_list.mat` and `test_list.mat` under `stanford_dogs_dataset/` as expected by the script. The held-out test list is used only for final scoring.
+The dataset files are not included in this repository. From the repository directory, run:
+
+```bash
+python download_stanford_dogs.py
+```
+
+This downloads the official Stanford `images.tar` and `lists.tar` archives and prepares the expected `stanford_dogs_dataset/images/Images/`, `train_list.mat`, and `test_list.mat` paths. The image archive is about 778 MB, so the download can take a while. Then run `python evaluate_stanford_dogs.py`. You can also run the downloader before `python train_stanford_dogs.py`.
+
+The downloader uses the archives published on the [Stanford Dogs dataset page](http://vision.stanford.edu/aditya86/ImageNetDogs/main.html). The held-out test list is used only for final scoring.
